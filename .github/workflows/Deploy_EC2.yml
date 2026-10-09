@@ -38,7 +38,7 @@ jobs:
           script: |
             cd /home/${{ secrets.REMOTE_USER }}
             test -f main
-            pkill -f './main' || true
+            pkill -x main || true
             export DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             export DATABASE_USER=${{ secrets.DATABASE_USER }}
             export DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
@@ -46,6 +46,6 @@ jobs:
             export DATABASE_PORT=${{ secrets.DATABASE_PORT }}
             export PORT=8000
             chmod +x main
-            nohup ./main > nohup.out 2> nohup.err < /dev/null &
+            setsid ./main > nohup.out 2> nohup.err < /dev/null &
             sleep 2
-            pgrep -f './main'
+            pgrep -x main
