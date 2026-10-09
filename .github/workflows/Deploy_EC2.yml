@@ -49,6 +49,7 @@ jobs:
             export DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
             export DATABASE_NAME=${{ secrets.DATABASE_NAME }}
             export DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+            export DATABASE_SSLMODE=require
             export PORT=8000
             chmod +x main
             setsid ./main > nohup.out 2> nohup.err < /dev/null &
