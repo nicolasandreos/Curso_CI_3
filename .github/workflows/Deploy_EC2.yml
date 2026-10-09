@@ -1,0 +1,41 @@
+name: Deploy to EC2 Instance in AWS
+
+on:
+  workflow_call:
+
+jobs:
+
+  deploy_ec2:
+     runs-on: ubuntu-latest
+     steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v3.0.0
+        with:
+          name: programa
+      - uses: actions/checkout@v3
+
+      - name: Setup SSH Deploy
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: /home/${{ secrets.REMOTE_USER }}
+          EXCLUDE: "postgres-data"
+
+      - name: Execute remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY}}
+          port: 22
+          script: |
+            export DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+            export DATABASE_USER=${{ secrets.DATABASE_USER }}
+            export DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            export DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            export DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+            export PORT=8000
+            chmod +x main
+            nohup ./main &
