@@ -16,7 +16,7 @@ jobs:
           name: programa
 
       - name: Make binary executable
-        run: chmod +x main
+        run: chmod +x main && ls -la main
 
       - name: Setup SSH Deploy
         uses: easingthemes/ssh-deploy@main
@@ -28,16 +28,21 @@ jobs:
           EXCLUDE: "postgres-data"
 
       - name: Execute remote ssh commands using password
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY}}
           port: 22
-          script_stop: true
+          debug: true
           script: |
             cd /home/${{ secrets.REMOTE_USER }}
-            test -f main
+            echo "=== workspace ==="
+            ls -la
+            if [ ! -f main ]; then
+              echo "ERROR: binary main not found"
+              exit 1
+            fi
             pkill -x main || true
             export DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             export DATABASE_USER=${{ secrets.DATABASE_USER }}
@@ -47,5 +52,13 @@ jobs:
             export PORT=8000
             chmod +x main
             setsid ./main > nohup.out 2> nohup.err < /dev/null &
-            sleep 2
-            pgrep -x main
+            sleep 3
+            echo "=== nohup.out ==="
+            cat nohup.out || true
+            echo "=== nohup.err ==="
+            cat nohup.err || true
+            if ! pgrep -x main >/dev/null; then
+              echo "ERROR: process main is not running"
+              exit 1
+            fi
+            echo "main is running"
