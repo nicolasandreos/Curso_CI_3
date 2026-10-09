@@ -8,11 +8,15 @@ jobs:
   deploy_ec2:
      runs-on: ubuntu-latest
      steps:
+      - uses: actions/checkout@v3
+
       - name: Download a Build Artifact
         uses: actions/download-artifact@v4
         with:
           name: programa
-      - uses: actions/checkout@v3
+
+      - name: Make binary executable
+        run: chmod +x main
 
       - name: Setup SSH Deploy
         uses: easingthemes/ssh-deploy@main
@@ -30,7 +34,11 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY}}
           port: 22
+          script_stop: true
           script: |
+            cd /home/${{ secrets.REMOTE_USER }}
+            test -f main
+            pkill -f './main' || true
             export DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             export DATABASE_USER=${{ secrets.DATABASE_USER }}
             export DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
@@ -39,3 +47,5 @@ jobs:
             export PORT=8000
             chmod +x main
             nohup ./main > nohup.out 2> nohup.err < /dev/null &
+            sleep 2
+            pgrep -f './main'
